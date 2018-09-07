@@ -1,12 +1,20 @@
+; During this lab, we were able to print the number in HEX to the monitor. In
+; order to do this, we had to initialize the registers and use them as pointers'
+; counters, and loops. By incrementing the register and using several loops, we
+; were able to print the correct characters to the screen.
 ;
-; The code given to you here implements the histogram calculation that 
+;
+;
+;
+;
+; The code given to you here implements the histogram calculation that
 ; we developed in class.  In programming lab, we will add code that
 ; prints a number in hexadecimal to the monitor.
 ;
-; Your assignment for this program is to combine these two pieces of 
+; Your assignment for this program is to combine these two pieces of
 ; code to print the histogram to the monitor.
 ;
-; If you finish your program, 
+; If you finish your program,
 ;    ** commit a working version to your repository  **
 ;    ** (and make a note of the repository version)! **
 
@@ -15,15 +23,15 @@
 
 
 ;
-; Count the occurrences of each letter (A to Z) in an ASCII string 
-; terminated by a NUL character.  Lower case and upper case should 
-; be counted together, and a count also kept of all non-alphabetic 
+; Count the occurrences of each letter (A to Z) in an ASCII string
+; terminated by a NUL character.  Lower case and upper case should
+; be counted together, and a count also kept of all non-alphabetic
 ; characters (not counting the terminal NUL).
 ;
 ; The string starts at x4000.
 ;
-; The resulting histogram (which will NOT be initialized in advance) 
-; should be stored starting at x3F00, with the non-alphabetic count 
+; The resulting histogram (which will NOT be initialized in advance)
+; should be stored starting at x3F00, with the non-alphabetic count
 ; at x3F00, and the count for each letter in x3F01 (A) through x3F1A (Z).
 ;
 ; table of register use in this part of the code
@@ -39,8 +47,8 @@
 ;
 
 	LD R0,HIST_ADDR      	; point R0 to the start of the histogram
-	
-	; fill the histogram with zeroes 
+
+	; fill the histogram with zeroes
 	AND R6,R6,#0		; put a zero into R6
 	LD R1,NUM_BINS		; initialize loop count to 27
 	ADD R2,R0,#0		; copy start of histogram into R2
@@ -96,18 +104,77 @@ GET_NEXT
 
 
 
-PRINT_HIST
+	PRINT_HIST
+		AND R1, R1, #0		; Clearing R1
+	  AND R5, R5, #0		; Clearing R5
+	  AND R6, R6, #0		; Clearing R6
+		LDI R2, HIST_ADDR	    ; Puts histogram address into R2
+		BR START		         ; It begins
+	NEXT
+		ADD R5, R5, #1		; Adds 1 to R5
+		LD R1, ASCIIOFFSET	     ; Puts the ASCII offset into R1
+		ADD R1, R1, R5		; Adds R5 to R1
+		BRzp FINISH		    ;if R1 is 0+, code goes to FINISH
+		LD R0, NEXTLINE 	; loads next line into R0
+		OUT		 	         ; prints next line
+		LD R2, HIST_ADDR	; loads histogram address into R2
+		ADD R2, R2, R5		; Adds R5 to R2
+		LDR R2, R2, #0		; Loads memory into R2
+	START
+		LD R0, AT		; Puts AT into R0
+		ADD R0, R0, R6		; Adds R6 to R0
+		ADD R6, R6, #1		; Adds 1 to R6 for twos complement
+		OUT			         ; prints ascii letter
+		LD R0, SPACE	   ; puts space in R0
+		OUT			         ; prints space
+		AND R3, R3, #0		; Clearing R3
+	  ADD R3, R3, #4		; Adds 4 to R3
+		AND R4, R4, #0		; Clearing R4
+	TESTERONE
+		ADD R3, R3, #-1		; Adds -1 to R3
+		BRn NEXT
+		AND R1, R1, #0		; Clearing R0
+		ADD R1, R1, #4		; Adds 4 to R1
+	TESTERTWO
+		ADD R1, R1, #-1		; Adds -1 to R1
+		BRn LOAD
+		ADD R2, R2, #-1
+	  ADD R2, R2, #1
+		BRn TESTERTHREE
+	  ADD R2, R2, R2		; Shift R2 to the left
+		ADD R4, R4, R4		; Same but R4
+		BR TESTERTWO
+	TESTERTHREE
+		ADD R4, R4, R4      ; Same as line 40
+		ADD R4, R4, #1      ; Adds 1 to R4
+		ADD R2, R2, R2		; Same as line 40
+		BR TESTERTWO
+	LOAD
+		AND R1, R1, #0		; Clearing R2
+		ADD R1, R4, #-10	     ; Adds -10 to R4 and stores into R1
+		BRzp ASCIIVALUE
+		LD R0, ZERO		; loads zero into R0
+		ADD R0, R0, R4		; Adds R4 into R0
+		OUT	                   ; prints ascii
+	TESTERFOUR
+		AND R4, R4, #0		; Clearing R4
+		BR TESTERONE
+	ASCIIVALUE
+		LD R0, A		; loads letter a into R0
+		ADD R0, R0, R1		; Adds R1 to R0
+		OUT			          ; prints
+		BR TESTERFOUR
+	FINISH
+		LD R0, NEXTLINE
+		OUT			          ; prints next line
+		HALT			          ; thank you for your time
 
-; you will need to insert your code to print the histogram here
-
-; do not forget to write a brief description of the approach/algorithm
-; for your implementation, list registers used in this part of the code,
-; and provide sufficient comments
-
-
-
-DONE	HALT			; done
-
+	ASCIIOFFSET	.FILL xFFE5	 ; offset to get into ascii storage space
+	AT	.FILL x0040
+	A	.FILL x0041
+	ZERO  .FILL x0030
+	SPACE	.FILL x0020
+	NEXTLINE 	.FILL xA
 
 ; the data needed by the program
 NUM_BINS	.FILL #27	; 27 loop iterations
