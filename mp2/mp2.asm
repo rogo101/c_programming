@@ -4,17 +4,6 @@
 ; printed in hexadecimal.
 ; raghavv2, ishanj2
 
-; mp2.asm
-; Implement a stack calculator that can do the following operations:
-; ADD, SUBTRACT, MULTIPLY, DIVIDE
-
-; Inputs:
-;   Console - postfix expression
-
-; Outputs:
-;   Console - [0 - F]{4}, evaluation of postfix expression
-;   Register R5 - [0 - F]{4}, evaluation of postfix expression
-
 .ORIG x3000
 
 MAIN
@@ -23,6 +12,7 @@ MAIN
 
 NEW_CHARACTER
 
+	AND R0, R0, #0 ;
 	GETC ;
 	OUT ; Echoes input
 	LD R1, EQUAL		; Loading Negative ASCII Value into R1
@@ -36,11 +26,15 @@ NEW_CHARACTER
 ONE_VALUE_CHECKER
 
 	JSR POP ;
-	ST R3, SAVE_VALUE ;
-	JSR POP ;
 	ADD R5, R5, #0 ;
 	BRp PRINT_INVALID ;
-	LDI R3, SAVE_VALUE ;
+	ST R0, SAVE_VALUE ;
+	JSR POP ;
+	ADD R5, R5, #0 ;
+	BRz PRINT_INVALID ;
+	LD R0, SAVE_VALUE ;
+	AND R5, R5, #0 ;
+	ADD R5, R0, #0 ;
 	JSR PRINT_HEX		; If only one value left, print hex answer to console
 	BRnzp DONE ; Halts program
 
@@ -87,8 +81,8 @@ VALIDITY_CHECKER
 	BRz OPERAND_CHECKER	;
 	LD R1, DIV1		;
 	ADD R1, R1, R0		;
-	BRz OPERAND_CHECKER	;If input is valid checks if input is an operand
-	BRnp PRINT_INVALID ; If input isn't valid prints to screen invalid expression
+	BRz OPERAND_CHECKER	;    If input is valid checks if input is an operand
+	BRnp PRINT_INVALID ;     If input isn't valid prints to screen invalid expression
 
 OPERAND_CHECKER ;
 
@@ -106,22 +100,27 @@ OPERAND_CHECKER ;
 	BRz OPERAND_TRUE	;
 	BRnp OPERAND_FALSE ; If input isn't operand, input must be digit
 
-OPERAND_TRUE
-
-	JSR PUSH ; Pushes operand onto stack
-	BRnzp NEW_CHARACTER ; Gets next character
-
 OPERAND_FALSE
 
+	JSR PUSH ; Pushes R0 onto stack
+	BRnzp NEW_CHARACTER ; Gets next character
+
+OPERAND_TRUE
+
+	ST R0, SAVE_VALUE ;
 	JSR POP ; Pops digit 1 from stack
-	ST R3, SAVE_VALUE ;
-	JSR POP ; Pops digit two from stack
-	AND R4, R4, #0 ;
-	ADD R4, R3, #0 ;
-	LDI R3, SAVE_VALUE ;
 	ADD R5, R5, #0 ;
 	BRp PRINT_INVALID ;
-	BRz APPLY_OPERAND ; Gets operand for computation
+	AND R3, R3, #0 ;
+	ADD R3, R3, R0 ;
+	JSR POP ; Pops digit two from stack
+	ADD R5, R5, #0 ;
+	BRp PRINT_INVALID ;
+	AND R4, R4, #0 ;
+	ADD R4, R0, #0 ;
+	LD R0, SAVE_VALUE ;
+	ADD R0, R0, #0 ;
+	BRnzp APPLY_OPERAND ; Gets operand for computation
 
 PRINT_INVALID
 
@@ -133,24 +132,23 @@ APPLY_OPERAND ; Determines which operand is used and jumps to respective subrout
 
 	LD R1, ADD1		;
 	ADD R1, R1, R0		;
-	BRz PLUS	;
-	BRz OPERAND_TRUE	; Pushes operand onto stack
+	JSR PLUS	;
+	BRnzp OPERAND_FALSE	; Pushes R0 onto stack
 	LD R1, MIN1		;
 	ADD R1, R1, R0		;
-	BRz MIN	;
-	BRz OPERAND_TRUE	;
+	JSR MIN	;
+	BRnzp OPERAND_FALSE	; Pushes R0 onto stack
 	LD R1, MULT1	;
 	ADD R1, R1, R0		;
-	BRz MUL	;
-	BRz OPERAND_TRUE	;
+	JSR MUL	;
+	BRnzp OPERAND_FALSE	; Pushes R0 onto stack
 	LD R1, DIV1		;
 	ADD R1, R1, R0		;
-	BRz DIV	;
-	BRz OPERAND_TRUE	;
+	JSR DIV	;
+	BRnzp OPERAND_FALSE	; Pushes R0 onto stack
 
 DONE
-
-    HALT ;
+    HALT
 
 
 ; PRINT_HEX
@@ -162,8 +160,8 @@ PRINT_HEX ; implements lab1 algorithm to print value in hexadecimal
 
 ; INSERT CODE HERE!
 
-AND R5, R5, #0 ;
-ADD R5, R3, #0 ;
+AND R1, R1, #0 ;
+ADD R1, R0, #0 ;
 AND R4, R4, #0 ;
 ADD R4, R4, #4 ; digit counter
 
@@ -171,8 +169,8 @@ OUTERLOOP
 
 	ADD R4, R4, #0 ;
 	BRz DONE1 ;
-	AND R2, R2, #0 ;
-	AND R3, R3, #0 ;
+	AND R2, R2, #0 ; initialize digit
+	AND R3, R3, #0 ; initialize bit counter
 	ADD R3, R3, #4 ;
 
 INNERLOOP
@@ -186,7 +184,7 @@ INNERLOOP
 
 CHECKER_RETURN
 
-	ADD R5, R5, R5 ;
+	ADD R1, R1, R1 ;
 	ADD R3, R3, #-1 ;
 	BRnzp INNERLOOP ;
 
@@ -202,30 +200,35 @@ POS
 
 DIGITCHECK
 
-	AND R1, R1, #0 ;
-	ADD R1, R2, #-9 ;
+	AND R2, R2, #-9 ;
 	BRnz TRUE
 	BRp FALSE
 
 TRUE
 
+	ADD R2, R2, #9 ;
 	LD R6, ZERO_OFFSET ;
-	ADD R2, R2, R6 ;
+	AND R0, R0, #0 ;
+	ADD R0, R2, R6 ;
 	OUT ;
 	ADD R4, R4, #-1 ;
 	BRnzp OUTERLOOP ;
 
 FALSE
 
+	ADD R2, R2, #9 ;
 	LD R6, A_OFFSET ;
-	ADD R2, R2, R6 ;
+	ADD R6, R6, #-10 ;
+
+	AND R0, R0, #0 ;
+	ADD R0, R2, R6 ;
+
 	OUT ;
 	ADD R4, R4, #-1 ;
 	BRnzp OUTERLOOP ;
 
 DONE1
-
-	RET ;
+	RET
 
 ; EVALUATE
 ;   Description: handles input from console
@@ -248,7 +251,7 @@ PLUS
 
 	AND R0, R0, #0		;
 	ADD R0, R3, R4		;
-	RET			;
+	RET
 
 
 ; MIN
@@ -264,7 +267,7 @@ MIN
 	NOT R4, R4		;
 	ADD R4, R4, #1		;
 	ADD R0, R3, R4		;
-	RET			;
+	RET
 
 ; MUL
 ;   Description: multiplies two numbers (R0 = R3 * R4)
@@ -279,11 +282,13 @@ MUL
 	AND R0, R0, #0		;
 	ADD R3, R3, #0 ;
 	BRz ZERO_MUL ;
+	ADD R3, R3, #0 ;
 	BRn NEG_MUL ;
+	ADD R3, R3, #0 ;
 	BRp POS_MUL ;
 
 ZERO_MUL
-		RET ;
+		RET
 
 NEG_MUL
 
@@ -291,8 +296,8 @@ NEXTADD1
 
 	ADD R0, R0, R4		;
 	ADD R3, R3, #1 	;
-	BRp 	NEXTADD1	;
-	RET			;
+	BRn 	NEXTADD1	;
+	RET
 
 POS_MUL
 
@@ -301,7 +306,7 @@ NEXTADD
 	ADD R0, R0, R4		;
 	ADD R3, R3, #-1 	;
 	BRp 	NEXTADD		;
-	RET			;
+	RET
 
 ; DIV
 ;   Description: divides two numbers (R0 = R3 / R4)
@@ -325,9 +330,7 @@ RELOOP
 	BRp 	RELOOP      ;
 
 GTFO
-        RET               ;
-
-
+        RET
 
 ; PUSH
 ;   Description: Pushes a charcter unto the stack
@@ -357,10 +360,8 @@ DONE_PUSH
 	LD R4, PUSH_SaveR4	;
 	RET
 
-
 PUSH_SaveR3	.BLKW #1	;
 PUSH_SaveR4	.BLKW #1	;
-
 
 ; POP
 ;   Description: Pops a character off the stack
@@ -391,32 +392,32 @@ DONE_POP
 	LD R4, POP_SaveR4	;
 	RET
 
-
 POP_SaveR3	.BLKW #1	;
 POP_SaveR4	.BLKW #1	;
 STACK_END	.FILL x3FF0	;
 STACK_START	.FILL x4000	;
 STACK_TOP	.FILL x4000	;
 
+ZERO .FILL xFFD0 ;
+ONE .FILL xFFCF ;
+TWO .FILL xFFCE ;
+THREE .FILL xFFCD ;
+FOUR .FILL xFFCC ;
+FIVE .FILL xFFCB ;
+SIX .FILL xFFCA ;
+SEVEN .FILL xFFC9 ;
+EIGHT .FILL xFFC8 ;
+NINE .FILL xFFC7 ;
+ADD1 .FILL xFFD5 ;
+MIN1 .FILL xFFD3 ;
+MULT1 .FILL xFFD6 ;
+DIV1 .FILL xFFD1 ;
+EQUAL .FILL xFFC3 ;
+SPACE .FILL xFFE0;
+ZERO_OFFSET .FILL x0030 ;
+A_OFFSET .FILL x0041 ;
+
 SAVE_VALUE .BLKW #1 ;
 INVALID_EXPRESSION .stringz "Invalid Expression" ;
 
-ZERO .FILL x0000 ;
-ONE .FILL xFFFF ;
-TWO .FILL xFFFE ;
-THREE .FILL xFFFD ;
-FOUR .FILL xFFFC ;
-FIVE .FILL xFFFB ;
-SIX .FILL xFFFA ;
-SEVEN .FILL xFFF9 ;
-EIGHT .FILL xFFF8 ;
-NINE .FILL xFFF7 ;
-ADD1 .FILL xFFC2 ;
-MIN1 .FILL xFFC4 ;
-MULT1 .FILL xFFC3 ;
-DIV1 .FILL xFFB1 ;
-EQUAL .FILL xFFCD ;
-SPACE .FILL xFFC0 ;
-ZERO_OFFSET .FILL x0030 ;
-A_OFFSET .FILL x0067 ;
 .END
