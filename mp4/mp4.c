@@ -2,7 +2,7 @@
 During this lab, we were able to successfully implement a C program to print all the
 semiprimes in a given range. We did this by designing the program to call the print functio
 n if both the inputs, a and b, are both positive and if b is greater than or equal to a.
-This program also used brak and continue loops.
+This program also used break and continue loops.
 Thanks for your time.
 raghavv2 ishanj2 pujithb2
 */
@@ -23,7 +23,8 @@ int main()
 int is_prime(int number)
 {
   int prime =1;
-  for(int i=2;i<number;i++)
+  int i;
+  for(i=2;i<number;i++)
   {
     if(number%i==0)
     {
@@ -41,9 +42,11 @@ int print_semiprimes(int a,int b)
 {
   int semiprime=0;
   int z=0;
-  for(int i=a;i<=b;i++) //outer loop for semiprime
+  int i;
+  for(i=a;i<=b;i++) //outer loop for semiprime
   {
-    for(int j=2;j<=i;j++) // inner loop to test particular number
+    int j;
+    for(j=2;j<=i;j++) // inner loop to test particular number
     {
       z=i/j;
       if (i % j != 0) {
