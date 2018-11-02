@@ -1,10 +1,16 @@
+/* This programming assignment is comprised of eight functions that carry out
+the game 2048. After initializing pointers and variables to be used throughout
+the functions, we used if, for, and while loops to iterate through each function.
+raghavv2 pujithb2 ishanj2
+*/
+
 #include "game.h"
 
 
 game * make_game(int rows, int cols)
 /*! Create an instance of a game structure with the given number of rows
     and columns, initializing elements to -1 and return a pointer
-    to it. (See game.h for the specification for the game data structure) 
+    to it. (See game.h for the specification for the game data structure)
     The needed memory should be dynamically allocated with the malloc family
     of functions.
 */
@@ -15,15 +21,33 @@ game * make_game(int rows, int cols)
 
     //YOUR CODE STARTS HERE:  Initialize all other variables in game struct
 
-
+    int score = 0, *cell, i = 0, j = 0; /* initializing variables and pointers*/
+    mygame -> score = score;
+    mygame -> rows = rows;
+    mygame -> cols = cols;
+      for (i = 0; i < rows; i++) {  /* for loop to iterate rows/columns */
+        for(j= 0; j < cols; j++){
+            cell = get_cell(mygame, i, j);
+            *cell = -1;
+            if (*cell == 0) { /* if statement to continue or break */
+              continue;
+            }
+            else {
+              if (*cell > 0) {
+                break;
+              }
+            }
+        }
+    }
     return mygame;
+
 }
 
 void remake_game(game ** _cur_game_ptr,int new_rows,int new_cols)
 /*! Given a game structure that is passed by reference, change the
 	game structure to have the given number of rows and columns. Initialize
-	the score and all elements in the cells to -1. Make sure that any 
-	memory previously allocated is not lost in this function.	
+	the score and all elements in the cells to -1. Make sure that any
+	memory previously allocated is not lost in this function.
 */
 {
 	/*Frees dynamically allocated memory used by cells in previous game,
@@ -33,14 +57,32 @@ void remake_game(game ** _cur_game_ptr,int new_rows,int new_cols)
 
 	 //YOUR CODE STARTS HERE:  Re-initialize all other variables in game struct
 
-	return;	
+   int score = 0, *cell, i ,j;
+   (*_cur_game_ptr) -> score = score; /* pointer initialization */
+   (*_cur_game_ptr) -> rows = new_rows;
+   (*_cur_game_ptr) -> cols = new_cols;
+     for (i = 0; i < new_rows; i++) {
+       for(j = 0; j < new_cols; j++){
+           cell = get_cell(*_cur_game_ptr, i, j);
+           *cell = -1;
+           if (*cell == 0) { /* conditional statement */
+             continue;
+           }
+           else {
+             if (*cell > 0) {
+               break;
+             }
+           }
+       }
+   }
+   return;
 }
 
 void destroy_game(game * cur_game)
 /*! Deallocate any memory acquired with malloc associated with the given game instance.
     This includes any substructures the game data structure contains. Do not modify this function.*/
 {
-    free(cur_game->cells);
+    free(cur_game->cells); /* Deallocation of memory*/
     free(cur_game);
     cur_game = NULL;
     return;
@@ -55,40 +97,167 @@ cell * get_cell(game * cur_game, int row, int col)
 {
     //YOUR CODE STARTS HERE
 
+    int *x;
+    int rowActual = cur_game -> rows;
+    int colActual = cur_game -> cols;
+    if (row <= rowActual) {    /*returns pointer to corresponding cell*/
+      if (col <= colActual) {
+        x = &(cur_game -> cells)[row * (cur_game -> cols) + col];
+        return x;
+      }
+    }
     return NULL;
 }
 
 int move_w(game * cur_game)
-/*!Slides all of the tiles in cur_game upwards. If a tile matches with the 
+/*!Slides all of the tiles in cur_game upwards. If a tile matches with the
    one above it, the tiles are merged by adding their values together. When
-   tiles merge, increase the score by the value of the new tile. A tile can 
-   not merge twice in one turn. If sliding the tiles up does not cause any 
-   cell to change value, w is an invalid move and return 0. Otherwise, return 1. 
+   tiles merge, increase the score by the value of the new tile. A tile can
+   not merge twice in one turn. If sliding the tiles up does not cause any
+   cell to change value, w is an invalid move and return 0. Otherwise, return 1.
 */
 {
     //YOUR CODE STARTS HERE
 
-    return 1;
+    int i, j, k;
+    int col = cur_game -> cols;
+    int row = cur_game -> rows;
+    int back, value = 0;
+    int *cells = cur_game -> cells;
+
+    for(j = 0; j < col; j++){  /* incrementing score by value of new*/
+      back = -1;
+      for (i = 0; i < row; i++) {
+        if (cells[i * col + j] > -1) {
+          for (k = 0; k < i; k++) {
+            if(cells[k * col + j] == -1){
+              value = 1;
+              cells[k * col + j] = cells[i * col + j];
+              cells[i * col + j] = -1;
+              break;
+            }
+          }
+          if(k - 1 != back){
+            if(cells[(k - 1) * col + j] == cells[k * col + j] && cells[(k - 1) * col + j] !=-1 && cells[k * col + j] !=-1){
+              cells[(k - 1) * col + j] = cells[k * col + j] + cells[(k - 1) * col + j];
+              value = 1;
+              back = k - 1;
+              cur_game -> score = (cur_game -> score) + cells[(k-1) * col + j];
+              cells[k * col + j] = -1;
+            }
+          }
+        }
+      }
+    }
+    return value;
 };
 
 int move_s(game * cur_game) //slide down
 {
     //YOUR CODE STARTS HERE
 
-    return 1;
+    int i, j, k;   /* initializing of variables */
+    int col = cur_game -> cols;
+    int row = cur_game -> rows;
+    int back, value = 0;
+    int *cells = cur_game -> cells;
+
+    for(j = 0; j < col; j++){
+      back = -1;
+      for (i = row - 1; i >= 0; i--) {
+        if (cells[i * col + j] > -1) {
+          for (k = row - 1; k > i; k--) {
+            if(cells[k * col + j] == -1){
+              value = 1;
+              cells[k * col + j] = cells[i * col + j];
+              cells[i * col + j] = -1;
+              break;
+            }
+          }
+          if(k + 1 != back){
+            if(cells[(k + 1) * col + j] == cells[k * col + j] && cells[(k + 1) * col + j] !=-1 && cells[k * col + j] !=-1){
+              cells[(k + 1) * col + j] = cells[k * col + j] + cells[(k + 1) * col + j];
+              value = 1;
+              back = k + 1;
+              cur_game -> score = (cur_game -> score) + cells[(k+1) * col + j];
+              cells[k * col + j] = -1;
+            }
+          }
+        }
+      }
+    }
+    return value;
 };
 
 int move_a(game * cur_game) //slide left
 {
-    //YOUR CODE STARTS HERE
+  int i, j, k;
+  int col = cur_game -> cols;
+  int row = cur_game -> rows;
+  int back, value = 0;
+  int *cells = cur_game -> cells;
 
-    return 1;
+  for(j = 0; j < col; j++){  /* for loop to iterate columns*/
+    back = -1;
+    for (i = 0; i < row; i++) {
+      if (cells[i * col + j] > -1) {
+        for (k = 0; k < j; k++) {
+          if(cells[i * col + k] == -1){
+            value = 1;
+            cells[i * col + k] = cells[i * col + j];
+            cells[i * col + j] = -1;
+            break;
+          }
+        }
+        if(k - 1 != back){
+          if(cells[i * col + k] == cells[i * col + (k - 1)] && cells[ i * col + (k - 1)] !=-1 && cells[i * col + k] !=-1) {
+            cells[i * col + (k - 1)] = cells[i * col + k] + cells[i * col + (k-1)];
+            value = 1;
+            back = k - 1;
+            cur_game -> score = (cur_game -> score) + cells[i * col + (k - 1)];
+            cells[i * col + k] = -1;
+          }
+        }
+      }
+    }
+  }
+  return value;
 };
 
 int move_d(game * cur_game){ //slide to the right
     //YOUR CODE STARTS HERE
 
-    return 1;
+    int i, j, k;
+    int col = cur_game -> cols;
+    int row = cur_game -> rows;
+    int back, value = 0;
+    int *cells = cur_game -> cells;
+
+    for(j = col-1; j >= 0; j--){ /*Decrement column iterator*/
+      back = -2;
+      for (i = 0; i < row; i++) {
+        if (cells[i * col + j] > -1) {
+          for (k = col - 1; k > j; k--) {
+            if(cells[i * col + k] == -1){
+              value = 1;
+              cells[i * col + k] = cells[i * col + j];
+              cells[i * col + j] = -1;
+              break;
+            }
+          }
+          if(k + 1 != back){
+            if(cells[i * col + k] == cells[i * col + (k + 1)] && cells[i * col + (k + 1)] !=-1 && cells[i * col + k] !=-1){
+              cells[i * col + (k + 1)] = cells[i * col + (k + 1)] + cells[i * col + k];
+              value = 1;
+              back = k + 1;
+              cur_game -> score = (cur_game -> score) + cells[i * col + (k + 1)];
+              cells[i * col + k] = -1;
+            }
+          }
+        }
+      }
+    }
+    return value;
 };
 
 int legal_move_check(game * cur_game)
@@ -98,8 +267,42 @@ int legal_move_check(game * cur_game)
  */
 {
     //YOUR CODE STARTS HERE
+    int a, b, col,row, *x;
 
-    return 1;
+    col = cur_game->cols;
+    row = cur_game->rows;
+    x = cur_game->cells;
+
+    for(a=0; a< row; a++){
+      for(b=0; b<col; b++){
+
+        if (x[a*col+b] == x[(a+1)*col+b]) {
+          return 1;
+        }
+        if (x[a*col+b] == x[(a-1)*col+b]) {
+          return 1;
+        }
+        if (x[a*col+b] == x[(a)*col+(b+1)]) {
+          return 1;
+        }
+        if (x[a*col+b] == x[(a)*col+(b-1)]) {
+          return 1;
+        }
+        if (x[(a+1)*col+b]==-1) {
+          return 1;
+        }
+        if (x[(a-1)*col+b] == -1) {
+          return 1;
+        }
+        if (x[(a)*col+(b+1)]==-1) {
+          return 1;
+        }
+        if (x[(a)*col+(b-1)]==-1) {
+          return 1;
+        }
+      }
+    }
+    return 0;
 }
 
 
@@ -109,32 +312,32 @@ void rand_new_tile(game * cur_game)
 /*! insert a new tile into a random empty cell. First call rand()%(rows*cols) to get a random value between 0 and (rows*cols)-1.
 */
 {
-	
+
 	cell * cell_ptr;
     cell_ptr = 	cur_game->cells;
-	
-    if (cell_ptr == NULL){ 	
+
+    if (cell_ptr == NULL){
         printf("Bad Cell Pointer.\n");
         exit(0);
     }
-	
-	
+
+
 	//check for an empty cell
 	int emptycheck = 0;
 	int i;
-	
+
 	for(i = 0; i < ((cur_game->rows)*(cur_game->cols)); i++){
 		if ((*cell_ptr) == -1){
 				emptycheck = 1;
 				break;
-		}		
+		}
         cell_ptr += 1;
 	}
 	if (emptycheck == 0){
 		printf("Error: Trying to insert into no a board with no empty cell. The function rand_new_tile() should only be called after tiles have succesfully moved, meaning there should be at least 1 open spot.\n");
 		exit(0);
 	}
-	
+
     int ind,row,col;
 	int num;
     do{
@@ -152,7 +355,7 @@ void rand_new_tile(game * cur_game)
 	}
 }
 
-int print_game(game * cur_game) 
+int print_game(game * cur_game)
 {
     cell * cell_ptr;
     cell_ptr = 	cur_game->cells;
@@ -160,21 +363,21 @@ int print_game(game * cur_game)
     int rows = cur_game->rows;
     int cols = cur_game->cols;
     int i,j;
-	
-	printf("\n\n\nscore:%d\n",cur_game->score); 
-	
-	
+
+	printf("\n\n\nscore:%d\n",cur_game->score);
+
+
 	printf("\u2554"); // topleft box char
 	for(i = 0; i < cols*5;i++)
 		printf("\u2550"); // top box char
-	printf("\u2557\n"); //top right char 
-	
-	
+	printf("\u2557\n"); //top right char
+
+
     for(i = 0; i < rows; i++){
 		printf("\u2551"); // side box char
         for(j = 0; j < cols; j++){
             if ((*cell_ptr) == -1 ) { //print asterisks
-                printf(" **  "); 
+                printf(" **  ");
             }
             else {
                 switch( *cell_ptr ){ //print colored text
@@ -227,22 +430,22 @@ int print_game(game * cur_game)
         }
 	printf("\u2551\n"); //print right wall and newline
     }
-	
+
 	printf("\u255A"); // print bottom left char
 	for(i = 0; i < cols*5;i++)
 		printf("\u2550"); // bottom char
 	printf("\u255D\n"); //bottom right char
-	
+
     return 0;
 }
 
 int process_turn(const char input_char, game* cur_game) //returns 1 if legal move is possible after input is processed
-{ 
+{
 	int rows,cols;
 	char buf[200];
 	char garbage[2];
     int move_success = 0;
-	
+
     switch ( input_char ) {
     case 'w':
         move_success = move_w(cur_game);
@@ -268,28 +471,28 @@ int process_turn(const char input_char, game* cur_game) //returns 1 if legal mov
 			printf("\nProgram Terminated.\n");
 			return 0;
 		}
-		
+
 		if (2 != sscanf(buf,"%d%d%1s",&rows,&cols,garbage) ||
 		rows < 0 || cols < 0){
 			printf("Invalid dimensions.\n");
 			goto dim_prompt;
-		} 
-		
+		}
+
 		remake_game(&cur_game,rows,cols);
-		
+
 		move_success = 1;
-		
+
     default: //any other input
         printf("Invalid Input. Valid inputs are: w, a, s, d, q, n.\n");
     }
 
-	
-	
-	
+
+
+
     if(move_success == 1){ //if movement happened, insert new tile and print the game.
-         rand_new_tile(cur_game); 
+         rand_new_tile(cur_game);
 		 print_game(cur_game);
-    } 
+    }
 
     if( legal_move_check(cur_game) == 0){  //check if the newly spawned tile results in game over.
         printf("Game Over!\n");
