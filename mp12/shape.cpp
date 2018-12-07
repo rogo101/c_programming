@@ -1,5 +1,5 @@
 #include "shape.hpp"
-
+#include <string>
 
 
 //Base class
@@ -8,10 +8,11 @@
 
 Shape::Shape(string name){
     //TODO
+    name_ = name;
 }
 string Shape::getName(){
     //TODO
-    return "name";
+    return name_;
 }
 
 
@@ -22,14 +23,19 @@ string Shape::getName(){
 
 void Rectangle::copy(const Rectangle& other){
     //TODO
+    spec = new double[2];
+    setWidth(other.getWidth());
+    setLength(other.getLength());
 }
 void Rectangle::clear(){
     //TODO
+    delete [] spec;
+    spec = NULL;
 }
 Rectangle::Rectangle(double width, double length):Shape("Rectangle"){
-    spec = new double[2];
-    spec[0] = width;
-    spec[1] = length;
+  spec = new double[2];
+  setWidth(width);
+  setLength(length);
 }
 Rectangle::Rectangle(const Rectangle& other):Shape("Rectangle"){
     copy(other);
@@ -44,21 +50,32 @@ const Rectangle& Rectangle::operator = (const Rectangle& other){
 }
 double Rectangle::getArea()const{
     //TODO
-    return 0;
+    return getWidth() * getLength();
 }
 double Rectangle::getVolume()const{
     //TODO
-    return 1;
+    return 0;
 }
 Rectangle Rectangle::operator + (const Rectangle& rhs){
     //TODO
-    return Rectangle(0,0);
+    Rectangle sum(0,0);
+    sum.setWidth(getWidth() + rhs.getWidth());
+    sum.setLength(getLength() + rhs.getLength());
+    return sum;
+
 }
 
 Rectangle Rectangle::operator - (const Rectangle& rhs){
     //TODO
-    return Rectangle(0,0);
-} 
+    Rectangle minus(0,0);
+    if (getWidth() - rhs.getWidth() > 0) {
+      minus.setWidth(getWidth() - rhs.getWidth());
+    }
+    if (getLength() - rhs.getLength() > 0) {
+      minus.setLength(getLength() - rhs.getLength());
+    }
+    return minus;
+}
 
 // double * spec;
 //spec[0] should be width
@@ -85,15 +102,21 @@ void Rectangle::setLength(double length){
 //@@Insert your code here
 void RectPrism::copy(const RectPrism& other){
     //TODO
+    spec = new double[3];
+    setWidth(other.getWidth());
+    setLength(other.getLength());
+    setHeight(other.getHeight());
 }
 void RectPrism::clear(){
     //TODO
+    delete [] spec;
+    spec = NULL;
 }
 RectPrism::RectPrism(double width, double length, double height):Shape("RectPrism"){
-    spec = new double[3];
-    spec[0] = length;
-    spec[1] = width;
-    spec[2] = height;
+  spec = new double[3];
+  setWidth(width);
+  setLength(length);
+  setHeight(height);
 }
 RectPrism::RectPrism(const RectPrism& other):Shape("RectPrism"){
     copy(other);
@@ -108,25 +131,39 @@ const RectPrism& RectPrism::operator = (const RectPrism& other){
 }
 double RectPrism::getVolume()const{
     //TODO
-    return 0;
+    return getWidth() * getLength() * getHeight();
 }
 double RectPrism::getArea()const{
     //TODO
-    return 0;
-}  
+    return 2 * (getLength() * getWidth() + getHeight() * getWidth() + getLength() * getHeight());
+}
 RectPrism RectPrism::operator + (const RectPrism& rhs){
     //TODO
-    return RectPrism(0,0,0);
+    RectPrism sum(0,0,0);
+    sum.setWidth(getWidth() + rhs.getWidth());
+    sum.setLength(getLength() + rhs.getLength());
+    sum.setHeight(getHeight() + rhs.getHeight());
+    return sum;
 }
 
 RectPrism RectPrism::operator - (const RectPrism& rhs){
     //TODO
-    return RectPrism(0,0,0);
+    RectPrism minus(0,0,0);
+    if (getWidth() - rhs.getWidth() > 0) {
+      minus.setWidth(getWidth() - rhs.getWidth());
+    }
+    if (getLength() - rhs.getLength() > 0) {
+      minus.setLength(getLength() - rhs.getLength());
+    }
+    if (getHeight() - rhs.getHeight() > 0) {
+      minus.setHeight(getHeight() - rhs.getHeight());
+    }
+    return minus;
 }
 
 // double * spec;
 //spec[0] should be length
-//spec[1] should be width 
+//spec[1] should be width
 //spec[2] should be height
 double RectPrism::getWidth()const{return spec? spec[1]:0;}
 double RectPrism::getHeight()const{return spec? spec[2]:0;}
@@ -151,39 +188,61 @@ void RectPrism::setLength(double length){
 }
 
 
- 
+
 // Read shapes from test.txt and initialize the objects
-// Return a vector of pointers that points to the objects 
+// Return a vector of pointers that points to the objects
 vector<Shape*> CreateShapes(char* file_name){
     //@@Insert your code here
-
     ifstream ifs (file_name, std::ifstream::in);
     double num_shapes = 0;
     ifs >> num_shapes;
     vector<Shape*> shape_ptrs(num_shapes, NULL);
-    //TODO    
-    
-
+    //TODO
+    int i;
+    for(i = 0; i < num_shapes; i++){
+      Shape* shape;
+      string name;
+      double width, length, height = 0;
+      ifs >> name;
+      if(name == "Rectangle"){
+        ifs >> width >> length;
+        shape = new Rectangle(width, length);
+      }
+      if(name == "RectPrism"){
+        ifs >> width >> length >> height;
+        shape = new RectPrism(width, length, height);
+      }
+      shape_ptrs[i]=shape;
+    }
     ifs.close();
     return shape_ptrs;
 }
 
-// call getArea() of each object 
+// call getArea() of each object
 // return the max area
 double MaxArea(vector<Shape*> shapes){
     double max_area = 0;
     //@@Insert your code here
-    
+    int i;
+    for (i = 0; i < shapes.size(); i++) {
+      if (shapes[i] -> getArea() > max_area) {
+        max_area = shapes[i] -> getArea();
+      }
+    }
     return max_area;
 }
 
 
-// call getVolume() of each object 
+// call getVolume() of each object
 // return the max volume
 double MaxVolume(vector<Shape*> shapes){
     double max_volume = 0;
     //@@Insert your code here
-
+    int i;
+    for (i = 0; i < shapes.size(); i++) {
+      if (shapes[i] -> getVolume() > max_volume) {
+        max_volume = shapes[i] -> getVolume();
+      }
+    }
     return max_volume;
 }
-
